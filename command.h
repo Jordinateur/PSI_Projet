@@ -1,5 +1,5 @@
-#ifndef SHELL_UTILS
-#define SHELL_UTILS 2
+#ifndef COMMMAND
+#define COMMMAND 4
 typedef struct command {
 	char * path;
 	char ** argv;
@@ -10,9 +10,5 @@ typedef struct command {
 	int status;
 } command;
 
-char * getLine(char* rawInput);
-char ** strToLexeme(char * str);
-int isRedirection(char * lexeme);
-char * findPathForCommand(char * command);
 command * lexemesToCommand(char ** lexemes);
 #endif
