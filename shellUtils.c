@@ -1,3 +1,4 @@
+#include "command.h"
 #include "shellUtils.h"
 #include <stdio.h>
 #include <string.h>
@@ -7,19 +8,14 @@
 //Recupere sur l'entree standard une chaine de caracter jusqu'au caracter de changement de ligne
 char * getLine(char* rawInput){
 	char lastChar;
-	while((lastChar = getchar()) != '\n'){
-		if(rawInput == NULL){
-			rawInput = (char *) malloc(1);
-			*rawInput = lastChar;
-		}else{
-			rawInput = appendCharToString(rawInput,lastChar);
-		}
+	while(!((lastChar = getchar()) == '\n' || lastChar == EOF)){
+		rawInput = appendCharToString(rawInput,lastChar);
 	}
-
 	return rawInput;
 }
 //Lis une chaine de caracter et en ressort un pointeur de pointeur de chaine avec pour chaine les lexemes de cette chaine
 char ** strToLexeme(char * str){
+	printf("strToLexeme enter\n");
 	char ** out;
 	char * inStr = str;
 	char * tmpLexeme = NULL;
@@ -62,52 +58,12 @@ char ** strToLexeme(char * str){
 
 	return out;
 }
-//Si la commande se termine par un '&'' renvoie vrai
-int isBackgrounded(char* binName){
-	if(binName[strlen(binName) - 1] == '&'){
-		return 1;
-	}else{
-		return 0;
-	}
-}
-//Detecte si la chaine est une redirection
-int isRedirection(char * lexeme){
-	char str1[] = "<";
-	char str2[] = ">";
-	char str3[] = "2>";
-	char str4[] = ">&2";
-	char str5[] = "2>&1";
-	char str6[] = ">>";
-	if(strcmp(lexeme,str1) == 0){
-		return 1;
-	}
-	if(strcmp(lexeme,str2) == 0){
-		return 1;
-	}
-	if(strcmp(lexeme,str3) == 0){
-		return 1;	
-	}
-	if(strcmp(lexeme,str4) == 0){
-		return 1;
-	}
-	if(strcmp(lexeme,str5) == 0){
-		return 1;
-	}
-	if(strcmp(lexeme,str5) == 0){
-		return 1;
-	}
-	if(strcmp(lexeme,str6) == 0){
-		return 1;
-	}
-	return 0;
-}
-//Retourne les ARGV d'un lexeme
-char ** extractArgv(char ** lexemes){
+//Transform une chaine de lexemes en les separant en lexemes de commands
+char ** lexemesToLexemesCommand(char ** lexemes){
 	char ** out;
-	while(*lexemes != NULL && !isRedirected(*lexemes)){
-		out = appendStringToStringList(out,*lexemes);
-		lexemes++;
-	}
+
+
 	return out;
+
 }
 

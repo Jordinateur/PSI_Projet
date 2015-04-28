@@ -6,7 +6,7 @@
 char* appendCharToString(char* array, char a)
 {
     char* out;
-	if(array == NULL || !array){
+	if(!array){
         out = (char *) malloc(2);
         out[0] = a;
         out[1] = '\0';

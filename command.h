@@ -1,14 +1,19 @@
 #ifndef COMMMAND
-#define COMMMAND 4
+#define COMMMAND
+#include <sys/types.h>
 typedef struct command {
 	char * path;
 	char ** argv;
-	void * stdin_ptr;
-	void * stdout_ptr;
-	void * stderr_ptr;
+	int stdin_ptr;
+	int stdout_ptr;
+	int stderr_ptr;
 	int background;
 	int status;
 } command;
-
+int isRedirection(char * lexeme);
+char * findPathForCommand(char * command);
 command * lexemesToCommand(char ** lexemes);
+char ** extractArgv(char ** lexemes);
+int isBackgrounded(char* binName);
+pid_t executeCommand(command * c);
 #endif
