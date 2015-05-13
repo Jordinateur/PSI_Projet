@@ -9,61 +9,95 @@
 char * getLine(char* rawInput){
 	char lastChar;
 	while(!((lastChar = getchar()) == '\n' || lastChar == EOF)){
-		rawInput = appendCharToString(rawInput,lastChar);
+		rawInput = appendCharToString2(rawInput,lastChar);
 	}
 	return rawInput;
 }
 //Lis une chaine de caracter et en ressort un pointeur de pointeur de chaine avec pour chaine les lexemes de cette chaine
-char ** strToLexeme(char * str){
-	printf("strToLexeme enter\n");
+char ** strToLexemes(char * str){
 	char ** out;
-	char * inStr = str;
-	char * tmpLexeme = NULL;
-	int countLexeme = 0;
-	while(*inStr){
-		if(*inStr == ' '){
-			countLexeme++;
-		}
-		inStr++;
+	char * arg;
+	char count = 0;
+	char * str_ptr = str;
+	while(*str_ptr){
+		if(*str_ptr == ' ') count++;
+		str_ptr++;
 	}
-	if(countLexeme > 0){
-		countLexeme++;
-		out = (char**) malloc(countLexeme + 1);
+	out = malloc(sizeof(char **) * (count + 2));
+	arg = strtok(str, " ");
+	int i = 0;
+    while( arg != NULL ){
+    	out[i] = malloc(sizeof(char * ) * (strlen(arg) + 1));
+		strcpy(out[i],arg);
+    	arg = strtok(NULL, " ");
+    	i++;
 	}
-	countLexeme = 0;
-	inStr = str;
-	while(*inStr){
-		if(*inStr == ' '){
-			out[countLexeme] = (char*) malloc(strlen(tmpLexeme) + 1);
-			strcpy(out[countLexeme],tmpLexeme);
-			printf("out[%d] = %s\n", countLexeme, tmpLexeme);
-			free(tmpLexeme);
-			countLexeme++;
-		}else{
-			tmpLexeme = appendCharToString(tmpLexeme, *inStr);
-		}
-		inStr++;
-	}
-	out[countLexeme] = (char*) malloc(strlen(tmpLexeme) + 1);
-	strcpy(out[countLexeme],tmpLexeme);
-	printf("out[%d] = %s\n", countLexeme, tmpLexeme);
-	//out[countLexeme + 1] = malloc(sizeof(char*) * 5);
-	out[countLexeme + 1] = NULL;
-	printf("a\n");
-	if(out[countLexeme + 1] == NULL){
-		printf("null\n");
-	}
-	printf("b\n");
-	free(tmpLexeme);
-
+	out[i] = NULL;
 	return out;
 }
-//Transform une chaine de lexemes en les separant en lexemes de commands
-char ** lexemesToLexemesCommand(char ** lexemes){
-	char ** out;
+int isEndCommand(char * lexeme){
+	char str1[] = ";";
+	char str2[] = "||";
+	char str3[] = "&&";
 
 
+	if(!strcmp(lexeme,str1) || !strcmp(lexeme,str2) || !strcmp(lexeme,str3)){
+		return 1;
+	}
+	return 0;
+}
+
+int * splitPointLexemes(char ** lexemes){
+	int * out;
+	int count = 0;
+	int commandCount = 0;
+	char ** tmp = lexemes;
+	while(tmp && *tmp){
+		if(isEndCommand(*tmp)){
+			commandCount++;
+		}
+		tmp++;
+	}
+	out = malloc(sizeof(int *) * (commandCount + 2));
+	commandCount = 0;
+	while(lexemes && *lexemes){
+		if(isEndCommand(*lexemes)){
+			out[commandCount] = count;
+			commandCount++;
+		}		
+		count++;
+		lexemes++;
+	}
+	out[commandCount] = count;
+	out[commandCount+1] = '\0';
+	return out;
+}
+
+char *** lexemesToCommands(char ** lexemes,int * splitPoints){
+	int start = 0;
+	int end = splitPoints[0];
+	int commandCount = 0;
+	int * sp = splitPoints;
+	char *** out;
+	while(*sp){
+		commandCount++;
+		
+		sp++;
+	}
+	out = malloc(sizeof(command *) * (commandCount + 2));
+	commandCount = 0;
+	while(*splitPoints){
+		end = *splitPoints;
+		out[commandCount] = malloc(sizeof(char **) * (end - start));
+		while(start < end){
+			out[commandCount] = appendStringToStringList2(out[commandCount],lexemes[start]);
+			start++;
+		}
+		commandCount++;
+		start = end;
+		splitPoints++;
+	}
+	out[commandCount] = 0;
 	return out;
 
 }
-

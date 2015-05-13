@@ -94,7 +94,6 @@ int stdoutCommand(char ** lexemes){
 	while(*lexemes){
 		if(isRedirection(*lexemes)){
 			if(isOut(*lexemes)){
-				printf("Compare ->  %s\n", *lexemes);
 				if(!strcmp(str2,*lexemes)){
 					lexemes++;
 					return fileno(fopen(*lexemes, "w"));
@@ -113,7 +112,6 @@ int stdoutCommand(char ** lexemes){
 //Find a stderr redirection
 int stderrCommand(char ** lexemes){
 	char str3[] = "2>";
-
 	while(*lexemes){
 		if(isRedirection(*lexemes)){
 			if(isErr(*lexemes)){
@@ -127,49 +125,98 @@ int stderrCommand(char ** lexemes){
 	}
 	return STDERR_FILENO;
 }
+int redirectToTrash(){
+	return fileno(fopen("/dev/null","r+"));
+}
 pid_t executeCommand(command * c){
 	pid_t pid = fork();
 	if(pid == 0){
 		dup2(c->stdin_ptr,0);
 		dup2(c->stdout_ptr,1);
 		dup2(c->stderr_ptr,2);
-		printf("Fils %d\n \n", c->status);
-		c->status  = c->status + 1;
 		execv(c->path,c->argv);
 		_exit(EXIT_FAILURE);
 	}else{
 		int status;
+		printf("programme  lancee %s ----- pid fils -> %d\n", c->path, pid);
 		waitpid(pid, &status, 0);
-		printf("Fin du Fils Pere %d \n \n", c->status);
+		if(WIFEXITED(status)){
+			c->status = WEXITSTATUS(status);
+		}
 	}
 	return pid;
 }
+int isCondition(char * lexeme){
+	char str1[] = ";";
+	char str2[] = "&&";
+	char str3[] = "||";
+	if(!strcmp(lexeme,str1)) return 1;
+	if(!strcmp(lexeme,str2)) return 2;
+	if(!strcmp(lexeme,str3)) return 3;
+	return 0;
+}
 //Transforms 
-command * lexemesToCommand(char ** lexemes){
-	command * c = malloc(sizeof(command));
-	if(isBackgrounded(lexemes[0])){
-		lexemes[0][strlen(lexemes[0]) - 1] = '\0';
-		c->background = 1;
+void lexemesToCommand(char ** lexemes, command * c){
+	int trash;
+	if(isCondition(lexemes[0])){
+		switch(isCondition(lexemes[0])){
+			case 1:
+				c->condition = 0;
+				break;
+			case 2:
+				c->condition = 1;			
+				break;
+			case 3:
+				c->condition = 2;
+				break;
+		}
+		lexemes++;
 	}else{
+		c->condition = 0;
+	}
+	if(isBackgrounded(lexemes[0])){
+		c->background = 1;
+		char * binName = malloc(sizeof(char *) * strlen(lexemes[0]));
+		memcpy(binName,lexemes[0],(sizeof(char *) * strlen(lexemes[0]) - 1));
+		binName[strlen(lexemes[0]) - 1] = '\0';
+		lexemes[0] = binName;
+		trash = redirectToTrash();
+
+	}else{
+		trash = 0;
 		c->background = 0;
 	}
+	c->path = malloc(sizeof(char *) * 255);
 	c->path = findPathForCommand(lexemes[0]);
 	c->argv = extractArgv(lexemes);
-	c->stdin_ptr = stdinCommand(lexemes);
-	c->stdout_ptr = stdoutCommand(lexemes);
-	c->stderr_ptr = stderrCommand(lexemes);
+	c->stdin_ptr = c->background?trash:stdinCommand(lexemes);
+	c->stdout_ptr = c->background?trash:stdoutCommand(lexemes);
+	c->stderr_ptr = c->background?trash:stderrCommand(lexemes);
 	c->status = 0;
 
-	return c;
+	//return c;
 
+}
+void freeCommand(command * c){
+	free(c->path);
+	free(c->argv);
+	if(c->background){
+		close(c->stdin_ptr);
+	}
+	//free(c);
 }
 //Retourne les ARGV d'un lexeme
 char ** extractArgv(char ** lexemes){
+	int count;
 	char ** out;
-	while(*lexemes != NULL && !isRedirection(*lexemes)){
-		out = appendStringToStringList(out,*lexemes);
-		lexemes++;
+	char ** ptr = lexemes;
+	while(*ptr != NULL && !isRedirection(*ptr)){
+		count++;
+		ptr++;
 	}
+	out =  malloc(sizeof(char **) * count + 1);
+	memcpy(out,lexemes,sizeof(char **) * count);
+	out[count] = "\0";
 	return out;
 }
 //Retourne le chemin d'une commande si elle existe dans le PATH
@@ -178,28 +225,24 @@ char * findPathForCommand(char * command){
 	char * path = NULL;
 	char * test = NULL;
 	char * q_p = command;
-	char * quick = malloc(sizeof(char * ));
-	quick[0] = '\0';
-	quick = appendCharToString(quick,'.');
-	quick = appendCharToString(quick,'/');
+	char * quick = malloc(sizeof(char * ) * 2);
+	quick[0] = '.';
+	quick[1] = '/';
 	while(*q_p){
-		quick = appendCharToString(quick,*q_p);
+		quick = appendCharToString2(quick,*q_p);
 		q_p++;
 	}
-	printf("quick -> %s\n", quick);
 	if(fileExist(quick)){
-		printf("command located -> %s\n", quick);
 		return quick;
 	}
 	while(*full_path){		
 		if(*full_path == ':'){
 			test = malloc(sizeof(char) * ((strlen(path) + strlen(command)) + 1));
 			strcpy(test,path);
-			test = appendCharToString(test,'/');
+			test = appendCharToString2(test,'/');
 			strcat(test,command);
 			if(fileExist(test)){
 				free(path);
-				printf("command located -> %s\n", test);
 				return test;
 			}
 			if(test != NULL){
@@ -208,7 +251,7 @@ char * findPathForCommand(char * command){
 			free(path);
 			path = NULL;
 		}else{
-			path = appendCharToString(path,*full_path);
+			path = appendCharToString2(path,*full_path);
 		}
 		full_path++;
 	}

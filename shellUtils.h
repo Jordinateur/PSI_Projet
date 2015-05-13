@@ -3,4 +3,7 @@
 
 char * getLine(char* rawInput);
 char ** strToLexeme(char * str);
+char ** strToLexemes(char * str);
+int * splitPointLexemes(char ** lexemes);
+char *** lexemesToCommands(char ** lexemes,int * splitPoints);
 #endif
