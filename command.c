@@ -211,7 +211,7 @@ void handleRedirection(char ** commandLexemes,command_t * c){
 				}else{
 					commandLexemes++;
 					c->stdout_ptr = malloc(sizeof(int *));
-					*(c->stdout_ptr) = open(*commandLexemes,O_WRONLY);
+					*(c->stdout_ptr) = open(*commandLexemes,O_CREAT | O_WRONLY);
 				}
 			}
 			if(isErrRedirection(*commandLexemes)){
@@ -317,10 +317,13 @@ void executeCommand(command_t * c, int * stop){
 		}else{
 			*stop = 1;
 			printf("La commmande est [%s] introuvable\n", *(c->argv));
-			return;			
+			return;
 		}
 	}
 	pid_t pid = fork();
+	if(pid && c->background){
+		printf("Processus [%d] lance en arriere plan\n", pid);
+	}
 	if(!pid){
 		if(c->stdin_ptr != NULL){
 			dup2(*(c->stdin_ptr),0);
@@ -336,13 +339,15 @@ void executeCommand(command_t * c, int * stop){
 		_exit(EXIT_FAILURE);
 	}else{
 		runningProcess = pid;
-		waitpid(pid,&(c->status), WUNTRACED | WCONTINUED);
+		if(!c->background){
+			waitpid(pid,&(c->status), WUNTRACED | WCONTINUED);
+		}
 	}
 }
 // Liberation de toutes la memoire alloué a une commmand_t
 void freeCommand(command_t * c){
 	if(c->path != NULL){
-		free((c)->path);		
+		free((c)->path);
 		free((c)->argv);
 	}
 	if((c)->stdin_ptr != NULL ){
@@ -396,7 +401,7 @@ void executeCommandList(command_t ** commandList){
 		if((*commandList)->invert){
 			lastStatus = !(*commandList)->status;
 		}else{
-			lastStatus = (*commandList)->status;	
+			lastStatus = (*commandList)->status;
 		}
 		freeCommand(*commandList);
 		commandList++;

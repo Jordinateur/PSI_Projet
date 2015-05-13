@@ -42,11 +42,22 @@ char ** splitLineToLexemes(char * line){
 	return lexemes;
 }
 //Remplace les variables d'environement par leurs valeurs
-//quentin
-char ** replaceVarInLexemes(char ** lexemes){
-	char ** out;
-	#pragma GCC diagnostic ignored "-Wuninitialized"
-	return out;
+void replaceVarInLexemes(char ** lexemes){
+	while(*lexemes){
+		if(*lexemes[0] == '$'){
+			char * ptr = *lexemes;
+			ptr++;
+			char * envVal = getenv(ptr);
+			if(envVal != NULL){
+				free(*lexemes);
+				*lexemes = malloc(sizeof(char *) * (strlen(envVal) + 1));
+				memset(*lexemes,0,sizeof(char *) * (strlen(envVal) + 1));
+				strcpy(*lexemes,envVal);
+			}	
+		}
+		lexemes++;
+	}
+	
 }
 
 //Separe la chaine de lexemes en chaines de lexemes represantant les instructions pour une commande
@@ -118,8 +129,7 @@ int main(int argc, char const *argv[]){
 		lineEntered = readLine();
 		lexemes =  splitLineToLexemes(lineEntered);
 		free(lineEntered);
-		//quentin
-		//lexemes = replaceVarInLexemes(lexemes);
+		replaceVarInLexemes(lexemes);
 		commandLexemesList = splitToCommandLexemesList(lexemes);
 		freeLexemes(lexemes);
 		commandList = commandLexemesListToCommandList(commandLexemesList);
