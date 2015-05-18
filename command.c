@@ -206,12 +206,12 @@ void handleRedirection(char ** commandLexemes,command_t * c){
 					commandLexemes++;
 					if(fileExist(*commandLexemes)){
 						c->stdout_ptr = malloc(sizeof(int *));
-						*(c->stdout_ptr) = open(*commandLexemes,O_APPEND);
+						*(c->stdout_ptr) = open(*commandLexemes,O_RDWR | O_APPEND);
 					}
 				}else{
 					commandLexemes++;
 					c->stdout_ptr = malloc(sizeof(int *));
-					*(c->stdout_ptr) = open(*commandLexemes,O_CREAT | O_WRONLY);
+					*(c->stdout_ptr) = open(*commandLexemes,O_CREAT | O_WRONLY, 0777);
 				}
 			}
 			if(isErrRedirection(*commandLexemes)){
@@ -219,12 +219,12 @@ void handleRedirection(char ** commandLexemes,command_t * c){
 					commandLexemes++;
 					if(fileExist(*commandLexemes)){
 						c->stderr_ptr = malloc(sizeof(int *));
-						*(c->stderr_ptr) = open(*commandLexemes,O_APPEND);
+						*(c->stderr_ptr) = open(*commandLexemes,O_RDWR | O_APPEND);
 					}
 				}else{
 					commandLexemes++;
 					c->stderr_ptr = malloc(sizeof(int *));
-					*(c->stderr_ptr) = open(*commandLexemes,O_WRONLY);
+					*(c->stderr_ptr) = open(*commandLexemes,O_WRONLY, 0777);
 				}
 			}
 		}
@@ -291,6 +291,7 @@ int isBuiltInCommand(char * commandName){
 	int r = 0;
 	r = r || !strcmp(commandName,"cd");
 	r = r || !strcmp(commandName,"exit");
+	r = r || !strcmp(commandName,"export");
 	return r;
 }
 
@@ -312,6 +313,37 @@ void executeCommand(command_t * c, int * stop){
 				}
 				(c->argv)--;
 				free(c->argv);
+				return;
+			}
+			if(!strcmp(*(c->argv),"export")){
+				char * varName;
+				char * varVal;
+				int varNameCount = 0;
+				int varValCount = 0;
+				(c->argv)++;
+				char * ptr = *(c->argv);
+				while(*ptr != '='){
+					varNameCount++;
+					ptr++;
+				}
+				ptr++;
+				while(*ptr){
+					varValCount++;
+					ptr++;
+				}
+				ptr = *(c->argv);
+				varName = malloc(sizeof(char *) * varNameCount);
+				memset(varName,0,sizeof(char *) * varNameCount);
+				strncpy(varName,ptr,varNameCount);
+				varVal = malloc(sizeof(char *) * varValCount);
+				memset(varVal,0,sizeof(char *) * varValCount);
+				int i = 0;
+				while(i <= varNameCount){
+					i++;
+					ptr++;
+				}
+				strcpy(varVal,ptr);
+				setenv(varName,varVal,1);
 				return;
 			}
 		}else{
