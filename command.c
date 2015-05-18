@@ -292,6 +292,7 @@ int isBuiltInCommand(char * commandName){
 	r = r || !strcmp(commandName,"cd");
 	r = r || !strcmp(commandName,"exit");
 	r = r || !strcmp(commandName,"export");
+	r = r || !strcmp(commandName,"unset");
 	return r;
 }
 
@@ -315,35 +316,18 @@ void executeCommand(command_t * c, int * stop){
 				free(c->argv);
 				return;
 			}
-			if(!strcmp(*(c->argv),"export")){
-				char * varName;
-				char * varVal;
-				int varNameCount = 0;
-				int varValCount = 0;
+			if(!strcmp(*(c->argv),"unset")){
 				(c->argv)++;
-				char * ptr = *(c->argv);
-				while(*ptr != '='){
-					varNameCount++;
-					ptr++;
-				}
-				ptr++;
-				while(*ptr){
-					varValCount++;
-					ptr++;
-				}
-				ptr = *(c->argv);
-				varName = malloc(sizeof(char *) * varNameCount);
-				memset(varName,0,sizeof(char *) * varNameCount);
-				strncpy(varName,ptr,varNameCount);
-				varVal = malloc(sizeof(char *) * varValCount);
-				memset(varVal,0,sizeof(char *) * varValCount);
-				int i = 0;
-				while(i <= varNameCount){
-					i++;
-					ptr++;
-				}
-				strcpy(varVal,ptr);
-				setenv(varName,varVal,1);
+				unsetenv(*(c->argv));
+				return;
+			}
+			if(!strcmp(*(c->argv),"export")){
+				char * env;
+				(c->argv)++;
+				env = malloc(sizeof(char * ) * strlen(*(c->argv)));
+				memset(env,0,sizeof(char * ) * strlen(*(c->argv)));
+				strcpy(env,*(c->argv));
+				putenv(env);
 				return;
 			}
 		}else{
