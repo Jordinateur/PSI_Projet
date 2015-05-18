@@ -319,6 +319,8 @@ void executeCommand(command_t * c, int * stop){
 			if(!strcmp(*(c->argv),"unset")){
 				(c->argv)++;
 				unsetenv(*(c->argv));
+				(c->argv)--;
+				free(c->argv);
 				return;
 			}
 			if(!strcmp(*(c->argv),"export")){
@@ -328,11 +330,13 @@ void executeCommand(command_t * c, int * stop){
 				memset(env,0,sizeof(char * ) * strlen(*(c->argv)));
 				strcpy(env,*(c->argv));
 				putenv(env);
+				(c->argv)--;
+				free(c->argv);
 				return;
 			}
 		}else{
 			*stop = 1;
-			printf("La commmande est [%s] introuvable\n", *(c->argv));
+			printf("La commmande [%s] est introuvable\n", *(c->argv));
 			return;
 		}
 	}
@@ -422,5 +426,4 @@ void executeCommandList(command_t ** commandList){
 		freeCommand(*commandList);
 		commandList++;
 	}
-
 }
