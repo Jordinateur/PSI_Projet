@@ -10,6 +10,7 @@
 
 static int runningProcess = 0;
 static int pausedProcess = 0;
+static int rien =  1;
 
 
 //Fonction qui envoie le signal d'interruption au processus courant
@@ -187,7 +188,7 @@ void handleBackgrounded(char ** lexemes, command_t * c){
 		return;
 	}
 }
-//Cette fonction va parser la commande sous forme de lexeme est populer les redirections de la command_t c si necessaire sinon elle sont a NULL 
+//Cette fonction va parser la commande sous forme de lexeme est populer les redirections de la command_t c si necessaire sinon elle sont a NULL
 void handleRedirection(char ** commandLexemes,command_t * c){
 	c->stdin_ptr = NULL;
 	c->stdout_ptr = NULL;
